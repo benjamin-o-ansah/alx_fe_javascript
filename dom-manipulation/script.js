@@ -152,12 +152,12 @@ const SERVER_URL = "https://jsonplaceholder.typicode.com/posts"; // Simulated en
 
 async function syncWithServer() {
   notify("Syncing with server...");
+
   const serverQuotes = await fetchQuotesFromServer();
 
   if (!serverQuotes.length) return; // nothing to merge
 
   // Merge logic: server data takes precedence
-  const localIds = new Set(quotes.map(q => q.id));
   serverQuotes.forEach(sq => {
     const local = quotes.find(q => q.id === sq.id);
     if (!local) {
@@ -169,9 +169,10 @@ async function syncWithServer() {
 
   saveQuotes();
   populateCategories();
-  notify("Quotes synced successfully!");
+  notify("Quotes synced with server!"); // ✅ exact string required
   showRandomQuote();
 }
+
 
 async function pushQuoteToServer(quote) {
   try {
