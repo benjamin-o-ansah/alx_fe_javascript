@@ -90,6 +90,10 @@ function addQuote() {
   document.getElementById("newQuoteText").value = "";
   document.getElementById("newQuoteCategory").value = "";
   notify("Quote added locally.");
+
+  // 🚀 Push this new quote to the server
+  pushQuoteToServer(newQuote);
+
   showRandomQuote();
 }
 
@@ -168,6 +172,29 @@ async function syncWithServer() {
   notify("Quotes synced successfully!");
   showRandomQuote();
 }
+
+async function pushQuoteToServer(quote) {
+  try {
+    const SERVER_URL = "https://jsonplaceholder.typicode.com/posts"; // mock API
+    const response = await fetch(SERVER_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(quote)
+    });
+
+    if (!response.ok) throw new Error("Failed to push quote to server.");
+
+    const result = await response.json();
+    console.log("Quote pushed to server:", result);
+    notify("Quote synced to server successfully!");
+  } catch (err) {
+    console.error(err);
+    notify("Failed to sync quote to server.");
+  }
+}
+
 
 // ===============================
 // Initialization
