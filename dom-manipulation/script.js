@@ -119,19 +119,13 @@ function importFromJsonFile(event) {
   reader.readAsText(event.target.files[0]);
 }
 
-// ===============================
-// Server Sync Simulation
-// ===============================
-const SERVER_URL = "https://jsonplaceholder.typicode.com/posts"; // Simulated endpoint
-
-async function syncWithServer() {
+async function fetchQuotesFromServer() {
+  const SERVER_URL = "https://jsonplaceholder.typicode.com/posts"; // mock API
   try {
-    notify("Syncing with server...");
-    // 1️⃣ Fetch data from server (simulate server-side quotes)
     const response = await fetch(SERVER_URL);
     const serverData = await response.json();
-
-    // Simulate quotes from server (only keep 5)
+    
+    // Convert server posts into quote format
     const serverQuotes = serverData.slice(0, 5).map((post, i) => ({
       id: i + 100,
       text: post.title,
@@ -139,30 +133,40 @@ async function syncWithServer() {
       updatedAt: Date.now()
     }));
 
-    // 2️⃣ Resolve conflicts — server wins
-    const localIds = new Set(quotes.map(q => q.id));
-    let newQuotes = [...quotes];
-
-    serverQuotes.forEach(sq => {
-      const local = newQuotes.find(q => q.id === sq.id);
-      if (!local) {
-        newQuotes.push(sq); // New from server
-      } else if (sq.updatedAt > local.updatedAt) {
-        // Server version newer
-        Object.assign(local, sq);
-      }
-    });
-
-    quotes = newQuotes;
-    saveQuotes();
-    populateCategories();
-    notify("Quotes synced successfully with server!");
-    showRandomQuote();
-
+    return serverQuotes;
   } catch (err) {
-    console.error(err);
-    notify("Failed to sync with server. Try again later.");
+    console.error("Error fetching server quotes:", err);
+    notify("Failed to fetch quotes from server.");
+    return [];
   }
+}
+
+// ===============================
+// Server Sync Simulation
+// ===============================
+const SERVER_URL = "https://jsonplaceholder.typicode.com/posts"; // Simulated endpoint
+
+async function syncWithServer() {
+  notify("Syncing with server...");
+  const serverQuotes = await fetchQuotesFromServer();
+
+  if (!serverQuotes.length) return; // nothing to merge
+
+  // Merge logic: server data takes precedence
+  const localIds = new Set(quotes.map(q => q.id));
+  serverQuotes.forEach(sq => {
+    const local = quotes.find(q => q.id === sq.id);
+    if (!local) {
+      quotes.push(sq);
+    } else if (sq.updatedAt > local.updatedAt) {
+      Object.assign(local, sq);
+    }
+  });
+
+  saveQuotes();
+  populateCategories();
+  notify("Quotes synced successfully!");
+  showRandomQuote();
 }
 
 // ===============================
